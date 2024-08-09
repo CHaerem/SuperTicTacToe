@@ -1,5 +1,6 @@
 @import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
 
+/* Base styles */
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
         'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -8,6 +9,7 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Switch styles */
 .switch {
     position: relative;
     display: inline-block;
@@ -59,11 +61,13 @@ input:checked + .slider:before {
     border-radius: 50%;
 }
 
+/* Game board styles */
 .small-board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1px;
     padding: 1px;
+    position: relative;
 }
 
 .cell {
@@ -79,4 +83,27 @@ input:checked + .slider:before {
 
 .cell:disabled {
     cursor: not-allowed;
+}
+
+/* Won tile styles */
+.won-tile {
+    position: relative;
+    background-color: rgba(229, 231, 235, 0.5); /* Light gray background */
+}
+
+.won-tile::after {
+    content: attr(data-winner);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 6rem;
+    font-weight: bold;
+    opacity: 0.6;
+    pointer-events: none;
+    color: #4B5563; /* A darker gray for better contrast */
+}
+
+.active-board {
+    background-color: #e5e7eb; /* gray-200 */
 }

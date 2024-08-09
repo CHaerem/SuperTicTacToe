@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+	// DOM Elements
 	const gameBoard = document.getElementById("game-board");
 	const gameStatus = document.getElementById("game-status");
 	const resetButton = document.getElementById("reset-game");
@@ -10,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const qrcodeDiv = document.getElementById("qrcode");
 	const gameUrlDiv = document.getElementById("game-url");
 
+	// Game State
 	let superBoard = Array(9)
 		.fill(null)
 		.map(() => Array(9).fill(null));
@@ -24,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	let playerSymbol = "X";
 	let gameInitialized = false;
 
+	// UI Functions
 	const updateGameStatus = () => {
 		if (winner) {
 			gameStatus.textContent = `Player ${winner} wins the game!`;
@@ -69,8 +72,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	const updateBoard = () => {
 		superBoard.forEach((smallBoard, bigIndex) => {
+			const smallBoardElement = gameBoard.children[bigIndex];
+			smallBoardElement.className = `small-board ${
+				smallWinners[bigIndex] ? "won-tile" : ""
+			} ${
+				activeBoard === bigIndex || activeBoard === null ? "active-board" : ""
+			}`;
+
+			if (smallWinners[bigIndex]) {
+				smallBoardElement.setAttribute("data-winner", smallWinners[bigIndex]);
+			} else {
+				smallBoardElement.removeAttribute("data-winner");
+			}
+
 			smallBoard.forEach((cell, smallIndex) => {
-				const cellElement = gameBoard.children[bigIndex].children[smallIndex];
+				const cellElement = smallBoardElement.children[smallIndex];
 				cellElement.textContent = cell;
 				cellElement.disabled =
 					!!cell ||
@@ -83,13 +99,13 @@ document.addEventListener("DOMContentLoaded", () => {
 												? "bg-blue-100 border-blue-500"
 												: "border-gray-300"
 										}
-                    ${smallWinners[bigIndex] ? "bg-green-200" : ""}
                     ${cell ? "cursor-not-allowed" : "hover:bg-gray-100"}`;
 			});
 		});
 		updateGameStatus();
 	};
 
+	// Game Logic
 	const handleMove = (bigIndex, smallIndex, isRemoteMove = false) => {
 		if (
 			winner ||
@@ -182,6 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 	};
 
+	// Event Handlers
 	const toggleVsComputer = () => {
 		vsComputer = vsComputerSwitch.checked;
 		vsLabel.textContent = vsComputer ? "vs Computer" : "vs Human";
@@ -189,6 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		resetGame();
 	};
 
+	// Multiplayer Functions
 	const generateGameUrl = (peerId) => {
 		const url = new URL(window.location.href);
 		url.searchParams.set("game", peerId);
