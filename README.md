@@ -63,6 +63,10 @@ You can play Super Tic Tac Toe online without any setup by visiting:
 2. Share the generated game URL or QR code with your opponent.
 3. The opponent can join by opening the URL or scanning the QR code.
 
+## Icon Attribution
+
+The icon used in this project was sourced from [Iconscout](https://iconscout.com/free-icon/game-entertainment-fun-tictactoe-tic-tac-toe-2).
+
 ## License
 
 This project is open source and available under the [MIT License](LICENSE).
