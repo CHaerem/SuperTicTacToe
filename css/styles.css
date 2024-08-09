@@ -7,6 +7,16 @@ body {
         sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+#app {
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Switch styles */
@@ -106,4 +116,32 @@ input:checked + .slider:before {
 
 .active-board {
     background-color: #e5e7eb; /* gray-200 */
+}
+
+/* PWA fullscreen styles */
+@media (display-mode: standalone) {
+    body {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .cell {
+        font-size: 1.2rem;
+    }
+
+    .won-tile::after {
+        font-size: 4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .cell {
+        font-size: 1rem;
+    }
+
+    .won-tile::after {
+        font-size: 3rem;
+    }
 }

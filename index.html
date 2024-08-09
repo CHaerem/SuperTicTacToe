@@ -2,10 +2,37 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+		/>
 		<title>Super Tic Tac Toe</title>
 		<link rel="stylesheet" href="css/styles.css" />
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+		<!-- PWA related meta tags and links -->
+		<link rel="manifest" href="manifest.json" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta
+			name="apple-mobile-web-app-status-bar-style"
+			content="black-translucent"
+		/>
+		<link rel="apple-touch-icon" href="images/icon-512x512.png" />
+		<meta name="theme-color" content="#4B5563" />
+
+		<!-- Favicon -->
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="32x32"
+			href="images/icon-32x32.png"
+		/>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="16x16"
+			href="images/icon-16x16.png"
+		/>
 	</head>
 	<body>
 		<div
@@ -71,5 +98,24 @@
 		<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 		<script src="js/gameLogic.js"></script>
 		<script src="js/app.js"></script>
+
+		<!-- Service Worker Registration -->
+		<script>
+			if ("serviceWorker" in navigator) {
+				window.addEventListener("load", () => {
+					navigator.serviceWorker
+						.register("/service-worker.js")
+						.then((registration) => {
+							console.log(
+								"Service Worker registered successfully:",
+								registration.scope
+							);
+						})
+						.catch((error) => {
+							console.log("Service Worker registration failed:", error);
+						});
+				});
+			}
+		</script>
 	</body>
 </html>
