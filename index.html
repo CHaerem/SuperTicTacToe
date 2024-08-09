@@ -17,8 +17,27 @@
 			name="apple-mobile-web-app-status-bar-style"
 			content="black-translucent"
 		/>
-		<link rel="apple-touch-icon" href="images/icon-512x512.png" />
-		<meta name="theme-color" content="#4B5563" />
+		<link
+			rel="apple-touch-icon"
+			sizes="128x128"
+			href="images/icon-128x128.png"
+		/>
+		<link
+			rel="apple-touch-icon"
+			sizes="192x192"
+			href="images/icon-192x192.png"
+		/>
+		<link
+			rel="apple-touch-icon"
+			sizes="256x256"
+			href="images/icon-256x256.png"
+		/>
+		<link
+			rel="apple-touch-icon"
+			sizes="512x512"
+			href="images/icon-512x512.png"
+		/>
+		<meta name="theme-color" content="#3498db" />
 
 		<!-- Favicon -->
 		<link
@@ -104,7 +123,7 @@
 			if ("serviceWorker" in navigator) {
 				window.addEventListener("load", () => {
 					navigator.serviceWorker
-						.register("/service-worker.js")
+						.register("./service-worker.js", { scope: "./" })
 						.then((registration) => {
 							console.log(
 								"Service Worker registered successfully:",

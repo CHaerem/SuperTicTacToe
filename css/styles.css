@@ -56,7 +56,7 @@ body {
 }
 
 input:checked + .slider {
-    background-color: #2196F3;
+    background-color: #3498db;
 }
 
 input:checked + .slider:before {
@@ -116,6 +116,19 @@ input:checked + .slider:before {
 
 .active-board {
     background-color: #e5e7eb; /* gray-200 */
+}
+
+/* Updated color scheme */
+.bg-blue-500 {
+    background-color: #3498db;
+}
+
+.border-blue-500 {
+    border-color: #3498db;
+}
+
+.text-blue-500 {
+    color: #3498db;
 }
 
 /* PWA fullscreen styles */
