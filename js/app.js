@@ -6,9 +6,9 @@ document.addEventListener("DOMContentLoaded", () => {
 	const vsLabel = document.getElementById("vs-label");
 	const aiOptions = document.getElementById("ai-options");
 	const aiDifficulty = document.getElementById("ai-difficulty");
-	const multiplayerOptions = document.getElementById("multiplayer");
-	const peerIdInput = document.getElementById("peer-id");
-	const connectButton = document.getElementById("connect");
+	const hostGameButton = document.getElementById("host-game");
+	const qrcodeDiv = document.getElementById("qrcode");
+	const gameUrlDiv = document.getElementById("game-url");
 
 	let superBoard = Array(9)
 		.fill(null)
@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	let connection = null;
 	let isHost = false;
 	let playerSymbol = "X";
+	let gameInitialized = false;
 
 	const updateGameStatus = () => {
 		if (winner) {
@@ -175,7 +176,8 @@ document.addEventListener("DOMContentLoaded", () => {
 		winner = null;
 		smallWinners = Array(9).fill(null);
 		initializeBoard();
-		if (connection) {
+		gameInitialized = true;
+		if (connection && isHost) {
 			connection.send({ type: "RESET" });
 		}
 	};
@@ -184,25 +186,57 @@ document.addEventListener("DOMContentLoaded", () => {
 		vsComputer = vsComputerSwitch.checked;
 		vsLabel.textContent = vsComputer ? "vs Computer" : "vs Human";
 		aiOptions.style.display = vsComputer ? "block" : "none";
-		multiplayerOptions.style.display = vsComputer ? "none" : "block";
 		resetGame();
 	};
 
-	const setupPeer = () => {
+	const generateGameUrl = (peerId) => {
+		const url = new URL(window.location.href);
+		url.searchParams.set("game", peerId);
+		return url.href;
+	};
+
+	const generateQRCode = (url) => {
+		qrcodeDiv.innerHTML = "";
+		new QRCode(qrcodeDiv, url);
+	};
+
+	const hostGame = () => {
 		peer = new Peer();
 		peer.on("open", (id) => {
 			console.log("My peer ID is: " + id);
-			peerIdInput.value = id;
+			const gameUrl = generateGameUrl(id);
+			generateQRCode(gameUrl);
+			gameUrlDiv.textContent = `Game URL: ${gameUrl}`;
+			gameUrlDiv.style.display = "block";
+			isHost = true;
+			playerSymbol = "X";
+			resetGame();
 		});
 		peer.on("connection", (conn) => {
 			connection = conn;
 			setupConnection(conn);
-			isHost = true;
-			playerSymbol = "X";
+		});
+	};
+
+	const joinGame = (peerId) => {
+		peer = new Peer();
+		peer.on("open", () => {
+			const conn = peer.connect(peerId);
+			connection = conn;
+			setupConnection(conn);
+			isHost = false;
+			playerSymbol = "O";
 		});
 	};
 
 	const setupConnection = (conn) => {
+		conn.on("open", () => {
+			gameStatus.textContent = "Connected to peer. Game is ready!";
+			if (isHost && !gameInitialized) {
+				resetGame();
+			}
+		});
+
 		conn.on("data", (data) => {
 			console.log("Received", data);
 			if (data.type === "MOVE") {
@@ -211,10 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
 				resetGame();
 			}
 		});
-		conn.on("open", () => {
-			gameStatus.textContent = "Connected to peer. Game is ready!";
-			resetGame();
-		});
+
 		conn.on("close", () => {
 			gameStatus.textContent =
 				"Connection closed. Refresh to start a new game.";
@@ -222,22 +253,23 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	};
 
-	const connectToPeer = () => {
-		if (peer && peerIdInput.value) {
-			const conn = peer.connect(peerIdInput.value);
-			connection = conn;
-			setupConnection(conn);
-			isHost = false;
-			playerSymbol = "O";
-		}
-	};
-
 	// Event Listeners
-	resetButton.addEventListener("click", resetGame);
+	resetButton.addEventListener("click", () => {
+		resetGame();
+		if (connection) {
+			connection.send({ type: "RESET" });
+		}
+	});
 	vsComputerSwitch.addEventListener("change", toggleVsComputer);
-	connectButton.addEventListener("click", connectToPeer);
+	hostGameButton.addEventListener("click", hostGame);
 
 	// Initialize the game
 	initializeBoard();
-	setupPeer();
+
+	// Check if we're joining a game
+	const urlParams = new URLSearchParams(window.location.search);
+	const gameId = urlParams.get("game");
+	if (gameId) {
+		joinGame(gameId);
+	}
 });
