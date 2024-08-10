@@ -1,15 +1,15 @@
 // common/multiplayerManager.js
-
 export class MultiplayerManager {
 	constructor() {
 		this.peer = null;
 		this.connection = null;
 		this.isHost = false;
-		this.playerSymbol = "X";
-		this.isMyTurn = false;
+		this.playerSymbol = null;
+		this.isMyTurn = true; // Both players start with the ability to move
 		this.onRemoteMove = null;
 		this.onGameStateUpdate = null;
 		this.onPlayerJoined = null;
+		this.onGameStart = null;
 		this.qrcodeDiv = document.getElementById("qrcode");
 		this.gameUrlDiv = document.getElementById("game-url");
 		this.qrOverlay = document.getElementById("qr-overlay");
@@ -27,8 +27,6 @@ export class MultiplayerManager {
 				this.generateQRCode(gameUrl);
 				this.updateGameUrlDisplay(gameUrl);
 				this.isHost = true;
-				this.playerSymbol = "X";
-				this.isMyTurn = true;
 			});
 			this.peer.on("connection", (conn) => {
 				this.connection = conn;
@@ -49,8 +47,6 @@ export class MultiplayerManager {
 				this.connection = conn;
 				this.setupConnection(conn);
 				this.isHost = false;
-				this.playerSymbol = "O";
-				this.isMyTurn = false;
 				resolve();
 			});
 		});
@@ -73,6 +69,10 @@ export class MultiplayerManager {
 				if (this.onGameStateUpdate) {
 					this.onGameStateUpdate(data.gameState);
 				}
+			} else if (data.type === "GAME_START") {
+				if (this.onGameStart) {
+					this.onGameStart(data.firstPlayerSymbol);
+				}
 			}
 		});
 
@@ -83,7 +83,7 @@ export class MultiplayerManager {
 	}
 
 	sendMove(bigIndex, smallIndex) {
-		if (this.connection) {
+		if (this.connection && this.isMyTurn) {
 			this.connection.send({ type: "MOVE", bigIndex, smallIndex });
 			this.isMyTurn = false;
 		}
@@ -92,6 +92,12 @@ export class MultiplayerManager {
 	sendGameState(gameState) {
 		if (this.connection) {
 			this.connection.send({ type: "GAME_STATE", gameState });
+		}
+	}
+
+	sendGameStart(firstPlayerSymbol) {
+		if (this.connection) {
+			this.connection.send({ type: "GAME_START", firstPlayerSymbol });
 		}
 	}
 

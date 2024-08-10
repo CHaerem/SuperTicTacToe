@@ -1,5 +1,4 @@
 // js/app.js
-
 import { Game } from "./game.js";
 import { AIPlayer } from "./aiPlayer.js";
 import { UI } from "./ui.js";
@@ -16,8 +15,10 @@ class App {
 
 		this.vsComputer = false;
 		this.isMultiplayer = false;
-		this.playerSymbol = "X";
+		this.isOnlineMultiplayer = false;
+		this.playerSymbol = null;
 		this.gameActive = false;
+		this.isFirstMove = true;
 
 		this.init();
 	}
@@ -29,10 +30,13 @@ class App {
 			onResetGame: this.resetGame.bind(this),
 			onAIDifficultyChange: (difficulty) => this.ai.setDifficulty(difficulty),
 			onComputerStart: this.startComputerGame.bind(this),
+			onLocalMultiplayerStart: this.startLocalMultiplayerGame.bind(this),
 		});
 
 		this.multiplayerManager.onGameStateUpdate = this.updateGameState.bind(this);
 		this.multiplayerManager.onRemoteMove = this.handleRemoteMove.bind(this);
+		this.multiplayerManager.onPlayerJoined = this.onPlayerJoined.bind(this);
+		this.multiplayerManager.onGameStart = this.onGameStart.bind(this);
 
 		this.ui.initBoard();
 		this.updateUI();
@@ -47,33 +51,28 @@ class App {
 		}
 	}
 
-	startLocalGame() {
-		console.log("Starting local game");
+	startLocalMultiplayerGame() {
+		console.log("Starting local multiplayer game");
 		this.gameActive = true;
 		this.vsComputer = false;
-		this.isMultiplayer = false;
+		this.isMultiplayer = true;
+		this.isOnlineMultiplayer = false;
+		this.playerSymbol = "X"; // Local games always start with X
 		this.game.reset();
 		this.ui.resetBoard();
 		this.updateUI();
 		this.menuManager.hideMenu();
-	}
-
-	startComputerGame() {
-		console.log("Starting game against computer");
-		this.gameActive = true;
-		this.vsComputer = true;
-		this.isMultiplayer = false;
-		this.playerSymbol = "O"; // Computer starts
-		this.game.reset();
-		this.ui.resetBoard();
-		this.updateUI();
-		this.menuManager.hideMenu();
-		this.triggerComputerMove();
 	}
 
 	handleMove(bigIndex, smallIndex, isComputerMove = false) {
-		if (!this.gameActive && !this.vsComputer && !this.isMultiplayer) {
-			this.startLocalGame();
+		if (!this.gameActive) {
+			if (this.isMultiplayer && !this.isOnlineMultiplayer) {
+				this.startLocalMultiplayerGame();
+			} else if (!this.vsComputer && !this.isMultiplayer) {
+				this.startLocalMultiplayerGame();
+			} else if (this.vsComputer) {
+				this.startComputerGame(true); // Player starts
+			}
 		}
 
 		if (!this.gameActive) return;
@@ -82,18 +81,17 @@ class App {
 		console.log("Game state before move:", this.game.getState());
 
 		if (this.game.isValidMove(bigIndex, smallIndex)) {
-			if (this.isMultiplayer) {
+			if (this.isOnlineMultiplayer) {
 				if (!this.multiplayerManager.isValidTurn()) {
-					console.log("Not your turn in multiplayer");
+					console.log("Not your turn in online multiplayer");
 					return;
 				}
-			} else if (
-				this.vsComputer &&
-				!isComputerMove &&
-				this.game.currentPlayer !== this.playerSymbol
-			) {
-				console.log("Not your turn against computer");
-				return;
+
+				if (this.isFirstMove) {
+					this.playerSymbol = "X";
+					this.multiplayerManager.sendGameStart("X");
+					this.isFirstMove = false;
+				}
 			}
 
 			this.game.makeMove(bigIndex, smallIndex);
@@ -101,7 +99,7 @@ class App {
 
 			console.log("Move made. New game state:", this.game.getState());
 
-			if (this.isMultiplayer) {
+			if (this.isOnlineMultiplayer) {
 				this.multiplayerManager.sendMove(bigIndex, smallIndex);
 				this.multiplayerManager.sendGameState(this.game.getState());
 			}
@@ -112,6 +110,89 @@ class App {
 		} else {
 			console.log("Invalid move attempted");
 		}
+	}
+
+	handleRemoteMove(bigIndex, smallIndex) {
+		if (this.isOnlineMultiplayer) {
+			if (this.isFirstMove) {
+				this.playerSymbol = "O";
+				this.isFirstMove = false;
+			}
+			this.game.makeMove(bigIndex, smallIndex);
+			this.updateUI();
+		}
+	}
+
+	onGameStart(firstPlayerSymbol) {
+		if (firstPlayerSymbol === "X") {
+			this.playerSymbol = "O";
+		} else {
+			this.playerSymbol = "X";
+		}
+		this.isFirstMove = false;
+		console.log(`Game started. You are player ${this.playerSymbol}`);
+	}
+
+	updateGameState(gameState) {
+		this.game.setState(gameState);
+		this.updateUI();
+	}
+
+	async hostGame() {
+		this.isMultiplayer = true;
+		this.isOnlineMultiplayer = true;
+		await this.multiplayerManager.hostGame();
+		this.startMultiplayerGame();
+	}
+
+	async joinGame(gameId) {
+		this.isMultiplayer = true;
+		this.isOnlineMultiplayer = true;
+		await this.multiplayerManager.joinGame(gameId);
+		this.startMultiplayerGame();
+	}
+
+	startMultiplayerGame() {
+		console.log("Starting online multiplayer game");
+		this.gameActive = true;
+		this.vsComputer = false;
+		this.isMultiplayer = true;
+		this.isOnlineMultiplayer = true;
+		this.isFirstMove = true;
+		this.game.reset();
+		this.ui.resetBoard();
+		this.updateUI();
+		this.menuManager.hideMenu();
+	}
+
+	toggleVsComputer(isVsComputer) {
+		console.log("Toggling vsComputer mode:", isVsComputer);
+		this.vsComputer = isVsComputer;
+		this.isMultiplayer = false;
+		this.isOnlineMultiplayer = false;
+		if (!isVsComputer) {
+			this.resetGame();
+		}
+	}
+
+	resetGame() {
+		console.log("Resetting game");
+		this.game.reset();
+		this.ui.resetBoard();
+		this.gameActive = false;
+		this.vsComputer = false;
+		this.isMultiplayer = false;
+		this.isOnlineMultiplayer = false;
+		this.playerSymbol = null;
+		this.isFirstMove = true;
+		this.menuManager.resetMenuState();
+		this.menuManager.showMenu();
+		this.updateUI();
+	}
+
+	updateUI() {
+		this.ui.updateBoard(this.game.getState());
+		this.ui.updateStatus(this.game.getStatus());
 	}
 
 	triggerComputerMove() {
@@ -133,52 +214,26 @@ class App {
 		}
 	}
 
-	handleRemoteMove(bigIndex, smallIndex) {
-		this.handleMove(bigIndex, smallIndex, true);
+	onPlayerJoined() {
+		console.log("Player joined the game");
+		// Add any additional logic you want to execute when a player joins
 	}
 
-	updateGameState(gameState) {
-		this.game.setState(gameState);
-		this.updateUI();
-	}
-
-	async hostGame() {
-		this.isMultiplayer = true;
-		await this.multiplayerManager.hostGame();
-		this.startLocalGame();
-	}
-
-	async joinGame(gameId) {
-		this.isMultiplayer = true;
-		await this.multiplayerManager.joinGame(gameId);
-		this.startLocalGame();
-	}
-
-	toggleVsComputer(isVsComputer) {
-		console.log("Toggling vsComputer mode:", isVsComputer);
-		this.vsComputer = isVsComputer;
+	startComputerGame(playerStarts = false) {
+		console.log("Starting game against computer");
+		this.gameActive = true;
+		this.vsComputer = true;
 		this.isMultiplayer = false;
-		if (!isVsComputer) {
-			this.resetGame();
-		}
-	}
-
-	resetGame() {
-		console.log("Resetting game");
+		this.isOnlineMultiplayer = false;
+		this.playerSymbol = playerStarts ? "X" : "O";
 		this.game.reset();
 		this.ui.resetBoard();
-		this.gameActive = false;
-		this.vsComputer = false;
-		this.isMultiplayer = false;
-		this.playerSymbol = "X";
-		this.menuManager.resetMenuState();
-		this.menuManager.showMenu();
 		this.updateUI();
-	}
+		this.menuManager.hideMenu();
 
-	updateUI() {
-		this.ui.updateBoard(this.game.getState());
-		this.ui.updateStatus(this.game.getStatus());
+		if (!playerStarts) {
+			this.triggerComputerMove();
+		}
 	}
 }
 

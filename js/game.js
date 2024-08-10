@@ -1,4 +1,4 @@
-// game.js
+// js/game.js
 export class Game {
 	constructor() {
 		this.lines = [
