@@ -16,12 +16,8 @@ class App {
 
 		this.vsComputer = false;
 		this.isMultiplayer = false;
-		this.peer = null;
-		this.connection = null;
-		this.isHost = false;
 		this.playerSymbol = "X";
 		this.gameActive = false;
-		this.isMyTurn = false;
 
 		this.init();
 	}
@@ -32,6 +28,7 @@ class App {
 			onHostGame: this.hostGame.bind(this),
 			onResetGame: this.resetGame.bind(this),
 			onAIDifficultyChange: (difficulty) => this.ai.setDifficulty(difficulty),
+			onComputerStart: this.startComputerGame.bind(this),
 		});
 
 		this.multiplayerManager.onGameStateUpdate = this.updateGameState.bind(this);
@@ -45,42 +42,94 @@ class App {
 		const gameId = urlParams.get("game");
 		if (gameId) {
 			this.joinGame(gameId);
+		} else {
+			this.menuManager.showMenu();
 		}
 	}
 
-	handleMove(bigIndex, smallIndex, isRemoteMove = false) {
+	startLocalGame() {
+		console.log("Starting local game");
+		this.gameActive = true;
+		this.vsComputer = false;
+		this.isMultiplayer = false;
+		this.game.reset();
+		this.ui.resetBoard();
+		this.updateUI();
+		this.menuManager.hideMenu();
+	}
+
+	startComputerGame() {
+		console.log("Starting game against computer");
+		this.gameActive = true;
+		this.vsComputer = true;
+		this.isMultiplayer = false;
+		this.playerSymbol = "O"; // Computer starts
+		this.game.reset();
+		this.ui.resetBoard();
+		this.updateUI();
+		this.menuManager.hideMenu();
+		this.triggerComputerMove();
+	}
+
+	handleMove(bigIndex, smallIndex, isComputerMove = false) {
+		if (!this.gameActive && !this.vsComputer && !this.isMultiplayer) {
+			this.startLocalGame();
+		}
+
+		if (!this.gameActive) return;
+
+		console.log("HandleMove called:", { bigIndex, smallIndex, isComputerMove });
+		console.log("Game state before move:", this.game.getState());
+
 		if (this.game.isValidMove(bigIndex, smallIndex)) {
 			if (this.isMultiplayer) {
-				if (!isRemoteMove && !this.isMyTurn) {
-					return; // Not your turn in multiplayer
+				if (!this.multiplayerManager.isValidTurn()) {
+					console.log("Not your turn in multiplayer");
+					return;
 				}
-			} else if (this.vsComputer && this.game.currentPlayer === "O") {
-				return; // Not your turn against computer
+			} else if (
+				this.vsComputer &&
+				!isComputerMove &&
+				this.game.currentPlayer !== this.playerSymbol
+			) {
+				console.log("Not your turn against computer");
+				return;
 			}
 
 			this.game.makeMove(bigIndex, smallIndex);
 			this.updateUI();
 
-			if (!this.gameActive) {
-				this.gameActive = true;
-				this.menuManager.hideMenu();
-			}
+			console.log("Move made. New game state:", this.game.getState());
 
 			if (this.isMultiplayer) {
-				if (!isRemoteMove) {
-					this.multiplayerManager.sendMove(bigIndex, smallIndex);
-				}
-				this.isMyTurn = !this.isMyTurn;
+				this.multiplayerManager.sendMove(bigIndex, smallIndex);
 				this.multiplayerManager.sendGameState(this.game.getState());
 			}
 
-			if (
-				this.vsComputer &&
-				this.game.currentPlayer === "O" &&
-				!this.game.winner
-			) {
-				setTimeout(() => this.makeComputerMove(), 1000);
+			if (this.vsComputer && !isComputerMove && !this.game.winner) {
+				this.triggerComputerMove();
 			}
+		} else {
+			console.log("Invalid move attempted");
+		}
+	}
+
+	triggerComputerMove() {
+		console.log(
+			"Triggering computer move. Current player:",
+			this.game.currentPlayer,
+			"Player symbol:",
+			this.playerSymbol
+		);
+		if (this.game.currentPlayer !== this.playerSymbol) {
+			setTimeout(() => {
+				const [bigIndex, smallIndex] = this.ai.getMove(
+					this.game.getState(),
+					this.game.activeBoard
+				);
+				console.log("Computer chose move:", bigIndex, smallIndex);
+				this.handleMove(bigIndex, smallIndex, true);
+			}, 500);
 		}
 	}
 
@@ -93,49 +142,38 @@ class App {
 		this.updateUI();
 	}
 
-	hostGame() {
+	async hostGame() {
 		this.isMultiplayer = true;
-		this.multiplayerManager.hostGame(() => {
-			this.gameActive = true;
-			this.menuManager.hideMenu();
-			this.multiplayerManager.hideQROverlay();
-		});
-		this.isHost = true;
-		this.isMyTurn = true; // Host starts the game
+		await this.multiplayerManager.hostGame();
+		this.startLocalGame();
 	}
 
-	joinGame(gameId) {
+	async joinGame(gameId) {
 		this.isMultiplayer = true;
-		this.multiplayerManager.joinGame(gameId, () => {
-			this.gameActive = true;
-			this.menuManager.hideMenu();
-		});
-		this.isHost = false;
-		this.isMyTurn = false; // Joining player waits for their turn
-	}
-
-	makeComputerMove() {
-		const [bigIndex, smallIndex] = this.ai.getMove(
-			this.game.getState(),
-			this.game.activeBoard
-		);
-		this.handleMove(bigIndex, smallIndex);
+		await this.multiplayerManager.joinGame(gameId);
+		this.startLocalGame();
 	}
 
 	toggleVsComputer(isVsComputer) {
+		console.log("Toggling vsComputer mode:", isVsComputer);
 		this.vsComputer = isVsComputer;
-		this.resetGame();
+		this.isMultiplayer = false;
+		if (!isVsComputer) {
+			this.resetGame();
+		}
 	}
 
 	resetGame() {
+		console.log("Resetting game");
 		this.game.reset();
 		this.ui.resetBoard();
-		this.updateUI();
 		this.gameActive = false;
+		this.vsComputer = false;
+		this.isMultiplayer = false;
+		this.playerSymbol = "X";
+		this.menuManager.resetMenuState();
 		this.menuManager.showMenu();
-		if (this.isMultiplayer && this.isHost) {
-			this.multiplayerManager.sendGameState(this.game.getState());
-		}
+		this.updateUI();
 	}
 
 	updateUI() {

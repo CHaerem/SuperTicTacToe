@@ -7,17 +7,23 @@ export class MenuManager {
 		this.aiOptions = document.getElementById("ai-options");
 		this.aiDifficulty = document.getElementById("ai-difficulty");
 		this.hostGameButton = document.getElementById("host-game");
+		this.computerStartButton = document.getElementById("computer-start");
 		this.resetButton = document.getElementById("reset-game");
 		this.qrOverlay = document.getElementById("qr-overlay");
 		this.closeQrButton = document.getElementById("close-qr");
 	}
 
-	init({ onVsComputerToggle, onHostGame, onResetGame, onAIDifficultyChange }) {
+	init({
+		onVsComputerToggle,
+		onHostGame,
+		onResetGame,
+		onAIDifficultyChange,
+		onComputerStart,
+	}) {
 		this.vsComputerSwitch.addEventListener("change", () => {
 			const isVsComputer = this.vsComputerSwitch.checked;
 			this.vsLabel.textContent = isVsComputer ? "vs Computer" : "vs Human";
-			this.aiOptions.style.display = isVsComputer ? "block" : "none";
-			this.hostGameButton.style.display = isVsComputer ? "none" : "block";
+			this.updateVisibility();
 			onVsComputerToggle(isVsComputer);
 		});
 
@@ -30,25 +36,37 @@ export class MenuManager {
 			this.showQROverlay();
 		});
 
+		this.computerStartButton.addEventListener("click", () => {
+			onComputerStart();
+		});
+
 		this.resetButton.addEventListener("click", onResetGame);
 
 		this.closeQrButton.addEventListener("click", () => {
 			this.hideQROverlay();
 		});
 
-		this.aiOptions.style.display = this.vsComputerSwitch.checked
-			? "block"
-			: "none";
-		this.hostGameButton.style.display = this.vsComputerSwitch.checked
-			? "none"
-			: "block";
+		this.updateVisibility();
+	}
+
+	updateVisibility() {
+		const isVsComputer = this.vsComputerSwitch.checked;
+		this.aiOptions.style.display = isVsComputer ? "block" : "none";
+		this.hostGameButton.style.display = isVsComputer ? "none" : "block";
+		this.computerStartButton.style.display = isVsComputer ? "block" : "none";
+	}
+
+	resetMenuState() {
+		this.vsComputerSwitch.checked = false;
+		this.vsLabel.textContent = "vs Human";
+		this.aiDifficulty.value = "medium";
+		this.updateVisibility();
 	}
 
 	setVsComputerState(isVsComputer) {
 		this.vsComputerSwitch.checked = isVsComputer;
 		this.vsLabel.textContent = isVsComputer ? "vs Computer" : "vs Human";
-		this.aiOptions.style.display = isVsComputer ? "block" : "none";
-		this.hostGameButton.style.display = isVsComputer ? "none" : "block";
+		this.updateVisibility();
 	}
 
 	setAIDifficulty(difficulty) {

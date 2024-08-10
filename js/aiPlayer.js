@@ -1,4 +1,4 @@
-// aiPlayer.js
+// js/aiPlayer.js
 export class AIPlayer {
 	constructor(game) {
 		this.game = game;
@@ -10,22 +10,32 @@ export class AIPlayer {
 	}
 
 	getMove(gameState, activeBoard) {
+		console.log("AI is calculating move. Active board:", activeBoard);
+		console.log("Current game state:", gameState);
+
 		const validBoards =
 			activeBoard === null ? [...Array(9).keys()] : [activeBoard];
 		const availableBoards = validBoards.filter(
 			(board) => !gameState.smallWinners[board]
 		);
 
+		let move;
 		switch (this.difficulty) {
 			case "easy":
-				return this.getRandomMove(gameState, availableBoards);
+				move = this.getRandomMove(gameState, availableBoards);
+				break;
 			case "medium":
-				return this.getMediumMove(gameState, availableBoards);
+				move = this.getMediumMove(gameState, availableBoards);
+				break;
 			case "hard":
-				return this.getHardMove(gameState, availableBoards);
+				move = this.getHardMove(gameState, availableBoards);
+				break;
 			default:
-				return this.getMediumMove(gameState, availableBoards);
+				move = this.getMediumMove(gameState, availableBoards);
 		}
+
+		console.log("AI chose move:", move);
+		return move;
 	}
 
 	getRandomMove(gameState, availableBoards) {

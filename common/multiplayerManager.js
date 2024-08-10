@@ -6,6 +6,7 @@ export class MultiplayerManager {
 		this.connection = null;
 		this.isHost = false;
 		this.playerSymbol = "X";
+		this.isMyTurn = false;
 		this.onRemoteMove = null;
 		this.onGameStateUpdate = null;
 		this.onPlayerJoined = null;
@@ -17,37 +18,41 @@ export class MultiplayerManager {
 		);
 	}
 
-	hostGame(onPlayerJoined) {
-		this.onPlayerJoined = onPlayerJoined;
-		this.peer = new Peer();
-		this.peer.on("open", (id) => {
-			console.log("My peer ID is: " + id);
-			const gameUrl = this.generateGameUrl(id);
-			this.generateQRCode(gameUrl);
-			this.updateGameUrlDisplay(gameUrl);
-			this.isHost = true;
-			this.playerSymbol = "X";
-		});
-		this.peer.on("connection", (conn) => {
-			this.connection = conn;
-			this.setupConnection(conn);
-			if (this.onPlayerJoined) {
-				this.onPlayerJoined();
-			}
+	hostGame() {
+		return new Promise((resolve) => {
+			this.peer = new Peer();
+			this.peer.on("open", (id) => {
+				console.log("My peer ID is: " + id);
+				const gameUrl = this.generateGameUrl(id);
+				this.generateQRCode(gameUrl);
+				this.updateGameUrlDisplay(gameUrl);
+				this.isHost = true;
+				this.playerSymbol = "X";
+				this.isMyTurn = true;
+			});
+			this.peer.on("connection", (conn) => {
+				this.connection = conn;
+				this.setupConnection(conn);
+				if (this.onPlayerJoined) {
+					this.onPlayerJoined();
+				}
+				resolve();
+			});
 		});
 	}
 
-	joinGame(peerId, onConnectionEstablished) {
-		this.peer = new Peer();
-		this.peer.on("open", () => {
-			const conn = this.peer.connect(peerId);
-			this.connection = conn;
-			this.setupConnection(conn);
-			this.isHost = false;
-			this.playerSymbol = "O";
-			if (onConnectionEstablished) {
-				onConnectionEstablished();
-			}
+	joinGame(peerId) {
+		return new Promise((resolve) => {
+			this.peer = new Peer();
+			this.peer.on("open", () => {
+				const conn = this.peer.connect(peerId);
+				this.connection = conn;
+				this.setupConnection(conn);
+				this.isHost = false;
+				this.playerSymbol = "O";
+				this.isMyTurn = false;
+				resolve();
+			});
 		});
 	}
 
@@ -63,6 +68,7 @@ export class MultiplayerManager {
 				if (this.onRemoteMove) {
 					this.onRemoteMove(data.bigIndex, data.smallIndex);
 				}
+				this.isMyTurn = true;
 			} else if (data.type === "GAME_STATE") {
 				if (this.onGameStateUpdate) {
 					this.onGameStateUpdate(data.gameState);
@@ -79,6 +85,7 @@ export class MultiplayerManager {
 	sendMove(bigIndex, smallIndex) {
 		if (this.connection) {
 			this.connection.send({ type: "MOVE", bigIndex, smallIndex });
+			this.isMyTurn = false;
 		}
 	}
 
@@ -86,6 +93,10 @@ export class MultiplayerManager {
 		if (this.connection) {
 			this.connection.send({ type: "GAME_STATE", gameState });
 		}
+	}
+
+	isValidTurn() {
+		return this.isMyTurn;
 	}
 
 	copyGameUrlToClipboard() {
