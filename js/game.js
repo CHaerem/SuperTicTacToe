@@ -102,4 +102,12 @@ export class Game {
 			}.`;
 		}
 	}
+
+	setState(state) {
+		this.superBoard = state.superBoard;
+		this.currentPlayer = state.currentPlayer;
+		this.activeBoard = state.activeBoard;
+		this.winner = state.winner;
+		this.smallWinners = state.smallWinners;
+	}
 }

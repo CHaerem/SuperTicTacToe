@@ -1,4 +1,5 @@
 // js/app.js
+
 import { Game } from "./game.js";
 import { AIPlayer } from "./aiPlayer.js";
 import { UI } from "./ui.js";
@@ -20,6 +21,7 @@ class App {
 		this.isHost = false;
 		this.playerSymbol = "X";
 		this.gameActive = false;
+		this.isMyTurn = false;
 
 		this.init();
 	}
@@ -31,6 +33,9 @@ class App {
 			onResetGame: this.resetGame.bind(this),
 			onAIDifficultyChange: (difficulty) => this.ai.setDifficulty(difficulty),
 		});
+
+		this.multiplayerManager.onGameStateUpdate = this.updateGameState.bind(this);
+		this.multiplayerManager.onRemoteMove = this.handleRemoteMove.bind(this);
 
 		this.ui.initBoard();
 		this.updateUI();
@@ -45,12 +50,12 @@ class App {
 
 	handleMove(bigIndex, smallIndex, isRemoteMove = false) {
 		if (this.game.isValidMove(bigIndex, smallIndex)) {
-			if (
-				this.connection &&
-				!isRemoteMove &&
-				this.game.currentPlayer !== this.playerSymbol
-			) {
-				return; // Not your turn in multiplayer
+			if (this.isMultiplayer) {
+				if (!isRemoteMove && !this.isMyTurn) {
+					return; // Not your turn in multiplayer
+				}
+			} else if (this.vsComputer && this.game.currentPlayer === "O") {
+				return; // Not your turn against computer
 			}
 
 			this.game.makeMove(bigIndex, smallIndex);
@@ -61,8 +66,12 @@ class App {
 				this.menuManager.hideMenu();
 			}
 
-			if (this.connection && !isRemoteMove) {
-				this.multiplayerManager.sendMove(bigIndex, smallIndex);
+			if (this.isMultiplayer) {
+				if (!isRemoteMove) {
+					this.multiplayerManager.sendMove(bigIndex, smallIndex);
+				}
+				this.isMyTurn = !this.isMyTurn;
+				this.multiplayerManager.sendGameState(this.game.getState());
 			}
 
 			if (
@@ -73,6 +82,36 @@ class App {
 				setTimeout(() => this.makeComputerMove(), 1000);
 			}
 		}
+	}
+
+	handleRemoteMove(bigIndex, smallIndex) {
+		this.handleMove(bigIndex, smallIndex, true);
+	}
+
+	updateGameState(gameState) {
+		this.game.setState(gameState);
+		this.updateUI();
+	}
+
+	hostGame() {
+		this.isMultiplayer = true;
+		this.multiplayerManager.hostGame(() => {
+			this.gameActive = true;
+			this.menuManager.hideMenu();
+			this.multiplayerManager.hideQROverlay();
+		});
+		this.isHost = true;
+		this.isMyTurn = true; // Host starts the game
+	}
+
+	joinGame(gameId) {
+		this.isMultiplayer = true;
+		this.multiplayerManager.joinGame(gameId, () => {
+			this.gameActive = true;
+			this.menuManager.hideMenu();
+		});
+		this.isHost = false;
+		this.isMyTurn = false; // Joining player waits for their turn
 	}
 
 	makeComputerMove() {
@@ -88,46 +127,14 @@ class App {
 		this.resetGame();
 	}
 
-	hostGame() {
-		this.isMultiplayer = true;
-		this.multiplayerManager.hostGame(this.handleRemoteMove.bind(this), () => {
-			this.gameActive = true;
-			this.menuManager.hideMenu();
-			this.multiplayerManager.hideQROverlay();
-		});
-		this.isHost = true;
-	}
-
-	joinGame(gameId) {
-		this.isMultiplayer = true;
-		this.multiplayerManager.joinGame(
-			gameId,
-			this.handleRemoteMove.bind(this),
-			() => {
-				this.gameActive = true;
-				this.menuManager.hideMenu();
-			}
-		);
-		this.isHost = false;
-	}
-
-	handleRemoteMove(bigIndex, smallIndex) {
-		this.game.makeMove(bigIndex, smallIndex);
-		this.updateUI();
-		if (!this.gameActive) {
-			this.gameActive = true;
-			this.menuManager.hideMenu();
-		}
-	}
-
 	resetGame() {
 		this.game.reset();
 		this.ui.resetBoard();
 		this.updateUI();
 		this.gameActive = false;
 		this.menuManager.showMenu();
-		if (this.connection && this.isHost) {
-			this.multiplayerManager.sendMove({ type: "RESET" });
+		if (this.isMultiplayer && this.isHost) {
+			this.multiplayerManager.sendGameState(this.game.getState());
 		}
 	}
 

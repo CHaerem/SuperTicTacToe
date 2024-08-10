@@ -1,4 +1,5 @@
 // common/multiplayerManager.js
+
 export class MultiplayerManager {
 	constructor() {
 		this.peer = null;
@@ -6,13 +7,15 @@ export class MultiplayerManager {
 		this.isHost = false;
 		this.playerSymbol = "X";
 		this.onRemoteMove = null;
+		this.onGameStateUpdate = null;
+		this.onPlayerJoined = null;
 		this.qrcodeDiv = document.getElementById("qrcode");
 		this.gameUrlDiv = document.getElementById("game-url");
 		this.qrOverlay = document.getElementById("qr-overlay");
 	}
 
-	hostGame(onRemoteMove, onPlayerJoined) {
-		this.onRemoteMove = onRemoteMove;
+	hostGame(onPlayerJoined) {
+		this.onPlayerJoined = onPlayerJoined;
 		this.peer = new Peer();
 		this.peer.on("open", (id) => {
 			console.log("My peer ID is: " + id);
@@ -25,12 +28,13 @@ export class MultiplayerManager {
 		this.peer.on("connection", (conn) => {
 			this.connection = conn;
 			this.setupConnection(conn);
-			onPlayerJoined();
+			if (this.onPlayerJoined) {
+				this.onPlayerJoined();
+			}
 		});
 	}
 
-	joinGame(peerId, onRemoteMove, onConnectionEstablished) {
-		this.onRemoteMove = onRemoteMove;
+	joinGame(peerId, onConnectionEstablished) {
 		this.peer = new Peer();
 		this.peer.on("open", () => {
 			const conn = this.peer.connect(peerId);
@@ -38,7 +42,9 @@ export class MultiplayerManager {
 			this.setupConnection(conn);
 			this.isHost = false;
 			this.playerSymbol = "O";
-			onConnectionEstablished();
+			if (onConnectionEstablished) {
+				onConnectionEstablished();
+			}
 		});
 	}
 
@@ -51,9 +57,13 @@ export class MultiplayerManager {
 		conn.on("data", (data) => {
 			console.log("Received", data);
 			if (data.type === "MOVE") {
-				this.onRemoteMove(data.bigIndex, data.smallIndex);
-			} else if (data.type === "RESET") {
-				// Trigger game reset
+				if (this.onRemoteMove) {
+					this.onRemoteMove(data.bigIndex, data.smallIndex);
+				}
+			} else if (data.type === "GAME_STATE") {
+				if (this.onGameStateUpdate) {
+					this.onGameStateUpdate(data.gameState);
+				}
 			}
 		});
 
@@ -66,6 +76,12 @@ export class MultiplayerManager {
 	sendMove(bigIndex, smallIndex) {
 		if (this.connection) {
 			this.connection.send({ type: "MOVE", bigIndex, smallIndex });
+		}
+	}
+
+	sendGameState(gameState) {
+		if (this.connection) {
+			this.connection.send({ type: "GAME_STATE", gameState });
 		}
 	}
 
