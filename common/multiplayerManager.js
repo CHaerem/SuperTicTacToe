@@ -12,6 +12,9 @@ export class MultiplayerManager {
 		this.qrcodeDiv = document.getElementById("qrcode");
 		this.gameUrlDiv = document.getElementById("game-url");
 		this.qrOverlay = document.getElementById("qr-overlay");
+		this.gameUrlDiv.addEventListener("click", () =>
+			this.copyGameUrlToClipboard()
+		);
 	}
 
 	hostGame(onPlayerJoined) {
@@ -83,6 +86,18 @@ export class MultiplayerManager {
 		if (this.connection) {
 			this.connection.send({ type: "GAME_STATE", gameState });
 		}
+	}
+
+	copyGameUrlToClipboard() {
+		const url = this.gameUrlDiv.textContent.replace("Game URL: ", "");
+		navigator.clipboard
+			.writeText(url)
+			.then(() => {
+				alert("Game URL copied to clipboard!");
+			})
+			.catch((err) => {
+				console.error("Failed to copy URL: ", err);
+			});
 	}
 
 	generateGameUrl(peerId) {
