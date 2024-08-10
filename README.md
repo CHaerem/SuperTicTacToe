@@ -8,10 +8,20 @@ You can play Super Tic Tac Toe online without any setup by visiting:
 
 [CHaerem.github.io/SuperTicTacToe](https://CHaerem.github.io/SuperTicTacToe)
 
+## How to Play
+
+Super Tic Tac Toe is played on a 3x3 grid of Tic Tac Toe boards. Here are the basic rules:
+
+1. Each turn, you mark a square in one of the smaller 3x3 boards.
+2. Your move determines which board your opponent plays in next.
+3. Win three smaller boards in a row to win the game.
+
+The game adds an extra layer of strategy to the classic Tic Tac Toe, as you need to think about both the immediate board and the overall game.
+
 ## Features
 
 - 3x3 grid of Tic Tac Toe boards
-- Play against a friend locally
+- Local multiplayer: Play against a friend on the same device
 - Play against the computer with three difficulty levels:
   - Easy
   - Medium
@@ -44,12 +54,15 @@ You can play Super Tic Tac Toe online without any setup by visiting:
 
 3. Open `index.html` in your web browser to start the game locally.
 
-## How to Play
+For online multiplayer functionality, ensure you have an active internet connection.
 
-1. The game is played on a 3x3 grid of Tic Tac Toe boards.
-2. Each turn, you mark a square in one of the smaller 3x3 boards.
-3. Your move determines which board your opponent plays in next.
-4. Win three smaller boards in a row to win the game.
+## Playing Modes
+
+### Local Multiplayer
+
+1. Open the game in your browser.
+2. Select "vs Human" mode.
+3. Take turns playing on the same device.
 
 ### Playing Against the Computer
 
@@ -63,10 +76,17 @@ You can play Super Tic Tac Toe online without any setup by visiting:
 2. Share the generated game URL or QR code with your opponent.
 3. The opponent can join by opening the URL or scanning the QR code.
 
+## Adding to Home Screen (iOS)
+
+For the best experience on iOS devices, you can add Super Tic Tac Toe to your home screen. Here's how:
+
+1. Open Safari and visit [CHaerem.github.io/SuperTicTacToe](https://CHaerem.github.io/SuperTicTacToe)
+2. Tap the Share button (the square with an arrow pointing upward) at the bottom of the screen.
+3. Scroll down and tap "Add to Home Screen".
+4. Give the app a name (or keep the suggested name) and tap "Add".
+
+Now you can launch Super Tic Tac Toe directly from your home screen, just like a native app!
+
 ## Icon Attribution
 
 The icon used in this project was sourced from [Iconscout](https://iconscout.com/free-icon/game-entertainment-fun-tictactoe-tic-tac-toe-2).
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
