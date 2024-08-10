@@ -1,13 +1,18 @@
-const CACHE_NAME = "super-ttt-cache-v1";
+// service-worker.js
+const CACHE_NAME = "super-ttt-cache-v2";
 const urlsToCache = [
 	"/",
 	"/index.html",
 	"/css/styles.css",
 	"/js/app.js",
-	"/js/gameLogic.js",
-	"/images/icon-128x128.png",
-	"/images/icon-256x256.png",
-	"/images/icon-512x512.png",
+	"/js/game.js",
+	"/js/aiPlayer.js",
+	"/js/ui.js",
+	"/common/menuManager.js",
+	"/common/multiplayerManager.js",
+	"/assets/images/icon-128x128.png",
+	"/assets/images/icon-256x256.png",
+	"/assets/images/icon-512x512.png",
 ];
 
 self.addEventListener("install", (event) => {
