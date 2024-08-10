@@ -1,4 +1,4 @@
-// app.js
+// js/app.js
 import { Game } from "./game.js";
 import { AIPlayer } from "./aiPlayer.js";
 import { UI } from "./ui.js";
@@ -19,7 +19,7 @@ class App {
 		this.connection = null;
 		this.isHost = false;
 		this.playerSymbol = "X";
-		this.gameInitialized = false;
+		this.gameActive = false;
 
 		this.init();
 	}
@@ -28,7 +28,6 @@ class App {
 		this.menuManager.init({
 			onVsComputerToggle: this.toggleVsComputer.bind(this),
 			onHostGame: this.hostGame.bind(this),
-			onJoinGame: this.joinGame.bind(this),
 			onResetGame: this.resetGame.bind(this),
 			onAIDifficultyChange: (difficulty) => this.ai.setDifficulty(difficulty),
 		});
@@ -57,8 +56,13 @@ class App {
 			this.game.makeMove(bigIndex, smallIndex);
 			this.updateUI();
 
+			if (!this.gameActive) {
+				this.gameActive = true;
+				this.menuManager.hideMenu();
+			}
+
 			if (this.connection && !isRemoteMove) {
-				this.connection.send({ type: "MOVE", bigIndex, smallIndex });
+				this.multiplayerManager.sendMove(bigIndex, smallIndex);
 			}
 
 			if (
@@ -86,26 +90,44 @@ class App {
 
 	hostGame() {
 		this.isMultiplayer = true;
-		this.multiplayerManager.hostGame(this.handleRemoteMove.bind(this));
+		this.multiplayerManager.hostGame(this.handleRemoteMove.bind(this), () => {
+			this.gameActive = true;
+			this.menuManager.hideMenu();
+			this.multiplayerManager.hideQROverlay();
+		});
+		this.isHost = true;
 	}
 
 	joinGame(gameId) {
 		this.isMultiplayer = true;
-		this.multiplayerManager.joinGame(gameId, this.handleRemoteMove.bind(this));
+		this.multiplayerManager.joinGame(
+			gameId,
+			this.handleRemoteMove.bind(this),
+			() => {
+				this.gameActive = true;
+				this.menuManager.hideMenu();
+			}
+		);
+		this.isHost = false;
 	}
 
 	handleRemoteMove(bigIndex, smallIndex) {
 		this.game.makeMove(bigIndex, smallIndex);
 		this.updateUI();
+		if (!this.gameActive) {
+			this.gameActive = true;
+			this.menuManager.hideMenu();
+		}
 	}
 
 	resetGame() {
 		this.game.reset();
 		this.ui.resetBoard();
 		this.updateUI();
-		this.gameInitialized = true;
+		this.gameActive = false;
+		this.menuManager.showMenu();
 		if (this.connection && this.isHost) {
-			this.connection.send({ type: "RESET" });
+			this.multiplayerManager.sendMove({ type: "RESET" });
 		}
 	}
 

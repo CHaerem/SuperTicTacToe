@@ -6,9 +6,12 @@ export class MultiplayerManager {
 		this.isHost = false;
 		this.playerSymbol = "X";
 		this.onRemoteMove = null;
+		this.qrcodeDiv = document.getElementById("qrcode");
+		this.gameUrlDiv = document.getElementById("game-url");
+		this.qrOverlay = document.getElementById("qr-overlay");
 	}
 
-	hostGame(onRemoteMove) {
+	hostGame(onRemoteMove, onPlayerJoined) {
 		this.onRemoteMove = onRemoteMove;
 		this.peer = new Peer();
 		this.peer.on("open", (id) => {
@@ -22,10 +25,11 @@ export class MultiplayerManager {
 		this.peer.on("connection", (conn) => {
 			this.connection = conn;
 			this.setupConnection(conn);
+			onPlayerJoined();
 		});
 	}
 
-	joinGame(peerId, onRemoteMove) {
+	joinGame(peerId, onRemoteMove, onConnectionEstablished) {
 		this.onRemoteMove = onRemoteMove;
 		this.peer = new Peer();
 		this.peer.on("open", () => {
@@ -34,12 +38,14 @@ export class MultiplayerManager {
 			this.setupConnection(conn);
 			this.isHost = false;
 			this.playerSymbol = "O";
+			onConnectionEstablished();
 		});
 	}
 
 	setupConnection(conn) {
 		conn.on("open", () => {
 			this.updateGameStatus("Connected to peer. Game is ready!");
+			this.hideQROverlay();
 		});
 
 		conn.on("data", (data) => {
@@ -70,19 +76,20 @@ export class MultiplayerManager {
 	}
 
 	generateQRCode(url) {
-		const qrcodeDiv = document.getElementById("qrcode");
-		qrcodeDiv.innerHTML = "";
-		new QRCode(qrcodeDiv, url);
+		this.qrcodeDiv.innerHTML = "";
+		new QRCode(this.qrcodeDiv, url);
 	}
 
 	updateGameUrlDisplay(url) {
-		const gameUrlDiv = document.getElementById("game-url");
-		gameUrlDiv.textContent = `Game URL: ${url}`;
-		gameUrlDiv.style.display = "block";
+		this.gameUrlDiv.textContent = `Game URL: ${url}`;
 	}
 
 	updateGameStatus(status) {
 		const gameStatus = document.getElementById("game-status");
 		gameStatus.textContent = status;
+	}
+
+	hideQROverlay() {
+		this.qrOverlay.classList.add("hidden");
 	}
 }

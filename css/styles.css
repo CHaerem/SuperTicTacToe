@@ -158,3 +158,9 @@ input:checked + .slider:before {
         font-size: 3rem;
     }
 }
+
+#qrcode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
