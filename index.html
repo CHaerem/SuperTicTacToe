@@ -103,9 +103,11 @@
 			</button>
 		</div>
 
+		<!-- Load PeerJS before your application scripts -->
 		<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-		<script src="js/gameLogic.js"></script>
-		<script src="js/app.js"></script>
+
+		<!-- Load your main application script as a module -->
+		<script type="module" src="js/app.js"></script>
 
 		<!-- Service Worker Registration -->
 		<script>
