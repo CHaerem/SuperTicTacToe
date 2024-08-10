@@ -74,6 +74,10 @@ export class UI {
                     ${cell ? "cursor-not-allowed" : "hover:bg-gray-100"}`;
 			});
 		});
+
+		if (gameState.winner) {
+			this.triggerConfetti();
+		}
 	}
 
 	updateStatus(status) {
@@ -82,5 +86,23 @@ export class UI {
 
 	resetBoard() {
 		this.initBoard();
+	}
+
+	triggerConfetti() {
+		confetti({
+			particleCount: 200,
+			spread: 70,
+			origin: { y: 0.6 },
+			scalar: 1.5,
+			shapes: ["square", "circle"],
+			colors: [
+				"#ff0000",
+				"#00ff00",
+				"#0000ff",
+				"#ffff00",
+				"#ff00ff",
+				"#00ffff",
+			],
+		});
 	}
 }
