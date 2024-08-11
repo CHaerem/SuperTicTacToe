@@ -87,6 +87,45 @@ For the best experience on iOS devices, you can add Super Tic Tac Toe to your ho
 
 Now you can launch Super Tic Tac Toe directly from your home screen, just like a native app!
 
+## Future Improvements Checklist
+
+- [ ] Implement robust multiplayer system:
+
+  - [ ] Generate unique game IDs using a simple UUID function
+  - [ ] Add reconnection logic to handle disconnects (retry 5 times with 5-second intervals)
+  - [ ] Implement move queue to ensure move synchronization (store last 100 moves)
+  - [ ] Add sequence numbers to moves to maintain order
+
+- [ ] Enhance state management:
+
+  - [ ] Implement game state persistence using localStorage
+  - [ ] Add logic to load saved game state on page reload
+  - [ ] Improve handling of player turns in online multiplayer (check current player against player symbol)
+
+- [ ] Update user interface:
+
+  - [ ] Add input field for game ID in the main menu
+  - [ ] Create "Join Game" button next to the game ID input
+  - [ ] Add visual indicator for current player's turn
+
+- [ ] Improve error handling and user feedback:
+
+  - [ ] Add error messages for failed connections and game joins
+  - [ ] Implement status updates for reconnection attempts
+  - [ ] Create toast notifications for important game events (e.g., opponent disconnected, reconnected)
+
+- [ ] Refactor and optimize code:
+
+  - [ ] Review Game class for potential performance improvements
+  - [ ] Separate networking logic from game logic for better modularity
+  - [ ] Implement a proper state management system (e.g., using a reducer pattern)
+
+- [ ] Add new features:
+
+  - [ ] Implement chat functionality for online multiplayer games
+  - [ ] Add option to customize game board size (e.g., 4x4 or 5x5 super board)
+  - [ ] Create a replay system to review past games
+
 ## Icon Attribution
 
 The icon used in this project was sourced from [Iconscout](https://iconscout.com/free-icon/game-entertainment-fun-tictactoe-tic-tac-toe-2).
